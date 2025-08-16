@@ -123,7 +123,8 @@ const initializeWhatsApp = () => {
       dataPath: sessionPath,
     }),
     puppeteer: {
-      headless: process.env.NODE_ENV === "production",
+      headless: true, // Force headless mode for server environments
+      executablePath: "/usr/bin/google-chrome-stable",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
