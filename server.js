@@ -360,11 +360,9 @@ app.get("/health", (req, res) => {
     timestamp: new Date().toISOString(),
   };
 
-  const statusCode = Object.values(health.checks).every(
-    (check) => check === "ok"
-  )
-    ? 200
-    : 503;
+  // The container should only be unhealthy if the server itself is down.
+  // WhatsApp connection issues are reported but don't trigger a restart.
+  const statusCode = health.checks.server === "ok" ? 200 : 503;
   res.status(statusCode).json(health);
 });
 
