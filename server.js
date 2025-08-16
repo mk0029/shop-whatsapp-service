@@ -1,7 +1,9 @@
 import express from "express";
 import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
-import qrcode from "qrcode-terminal";
+let qrCodeDataUrl = null;
+import qrcodeTerminal from "qrcode-terminal";
+import qrcode from "qrcode";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
@@ -124,7 +126,7 @@ const initializeWhatsApp = () => {
     }),
     puppeteer: {
       headless: true, // Force headless mode for server environments
-      executablePath: "/usr/bin/google-chrome-stable",
+      executablePath: "/opt/google/chrome/bin/google-chrome",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -143,9 +145,16 @@ const initializeWhatsApp = () => {
   // QR Code generation
   whatsappClient.on("qr", (qr) => {
     logger.info("📱 QR Code generated for WhatsApp login");
-    console.log("\n📱 Scan the QR code below to login to WhatsApp:");
-    qrcode.generate(qr, { small: true });
-    console.log("⏳ Waiting for QR code scan...\n");
+    qrcode.toDataURL(qr, (err, url) => {
+      if (err) {
+        logger.error("Failed to generate QR code data URL", { error: err });
+        return;
+      }
+      qrCodeDataUrl = url;
+      logger.info("QR Code available at /qr endpoint");
+      console.log(`\n📱 Scan QR code by visiting the /qr endpoint on your service URL.`);
+    });
+    qrcodeTerminal.generate(qr, { small: true }); // Keep for local console
   });
 
   // Authentication events
@@ -330,6 +339,14 @@ app.get("/status", (req, res) => {
   });
 
   res.json(response);
+});
+
+app.get("/qr", (req, res) => {
+  if (qrCodeDataUrl) {
+    res.send(`<img src="${qrCodeDataUrl}" alt="Scan this QR code with WhatsApp">`);
+  } else {
+    res.status(404).json({ success: false, error: "QR code not available at the moment. It may have been scanned already or is not yet generated." });
+  }
 });
 
 app.get("/health", (req, res) => {
