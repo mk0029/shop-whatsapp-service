@@ -126,7 +126,6 @@ const initializeWhatsApp = () => {
     }),
     puppeteer: {
       headless: true, // Force headless mode for server environments
-      executablePath: "/opt/google/chrome/bin/google-chrome",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
